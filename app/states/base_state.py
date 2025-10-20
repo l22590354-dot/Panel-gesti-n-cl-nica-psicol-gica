@@ -221,6 +221,8 @@ class State(rx.State):
     def toggle_patient_modal(self, patient: Usuario | None = None):
         self.show_patient_modal = not self.show_patient_modal
         self.editing_patient = patient
+        if not self.show_patient_modal:
+            self.editing_patient = None
 
     @rx.event
     def toggle_psychologist_modal(self, psychologist: Psicologo | None = None):
@@ -230,6 +232,115 @@ class State(rx.State):
     @rx.event
     def toggle_test_modal(self):
         self.show_test_modal = not self.show_test_modal
+
+    @rx.event(background=True)
+    async def save_patient(self, form_data: dict):
+        async with self:
+            self.is_loading = True
+        try:
+            curp = form_data.get("CURP")
+            if not curp:
+                raise ValueError("CURP is required.")
+            for key, value in form_data.items():
+                if value == "":
+                    form_data[key] = None
+            async with rx.asession() as session:
+                if self.editing_patient:
+                    query = text("""UPDATE Usuario SET 
+                           nombre = :nombre, fecha_nacimiento = :fecha_nacimiento, motivo = :motivo, 
+                           profesion = :profesion, domicilio = :domicilio, telefono = :telefono, 
+                           correo = :correo, alergias = :alergias, medicamento = :medicamento
+                           WHERE CURP = :CURP;""")
+                else:
+                    query = text("""INSERT INTO Usuario (CURP, nombre, fecha_nacimiento, motivo, profesion, domicilio, telefono, correo, alergias, medicamento)
+                           VALUES (:CURP, :nombre, :fecha_nacimiento, :motivo, :profesion, :domicilio, :telefono, :correo, :alergias, :medicamento);""")
+                await session.execute(query, form_data)
+                await session.commit()
+        except Exception as e:
+            logging.exception(f"Error saving patient: {e}")
+            async with self:
+                self.is_loading = False
+            yield rx.toast.error(f"Error al guardar paciente: {e}")
+            return
+        async with self:
+            self.show_patient_modal = False
+            self.editing_patient = None
+        yield State.get_patients()
+        yield rx.toast.success("Paciente guardado exitosamente.")
+        yield State.finish_loading()
+
+    @rx.event(background=True)
+    async def delete_patient(self, curp: str):
+        async with self:
+            self.is_loading = True
+        try:
+            async with rx.asession() as session:
+                query = text("DELETE FROM Usuario WHERE CURP = :CURP")
+                await session.execute(query, {"CURP": curp})
+                await session.commit()
+        except Exception as e:
+            logging.exception(f"Error deleting patient: {e}")
+            async with self:
+                self.is_loading = False
+            yield rx.toast.error(f"Error al eliminar paciente: {e}")
+            return
+        yield State.get_patients()
+        yield rx.toast.success("Paciente eliminado exitosamente.")
+        yield State.finish_loading()
+
+    @rx.event(background=True)
+    async def save_psychologist(self, form_data: dict):
+        async with self:
+            self.is_loading = True
+        try:
+            rfc = form_data.get("RFC")
+            if not rfc:
+                raise ValueError("RFC is required.")
+            for key, value in form_data.items():
+                if value == "":
+                    form_data[key] = None
+            async with rx.asession() as session:
+                if self.editing_psychologist:
+                    query = text("""UPDATE Psicologo SET 
+                           nombre = :nombre, telefono = :telefono, correo = :correo, 
+                           especialidad = :especialidad, cedula_profesional = :cedula_profesional
+                           WHERE RFC = :RFC;""")
+                else:
+                    query = text("""INSERT INTO Psicologo (RFC, nombre, telefono, correo, especialidad, cedula_profesional)
+                           VALUES (:RFC, :nombre, :telefono, :correo, :especialidad, :cedula_profesional);""")
+                await session.execute(query, form_data)
+                await session.commit()
+        except Exception as e:
+            logging.exception(f"Error saving psychologist: {e}")
+            async with self:
+                self.is_loading = False
+            yield rx.toast.error(f"Error al guardar psicólogo: {e}")
+            return
+        async with self:
+            self.show_psychologist_modal = False
+            self.editing_psychologist = None
+        yield State.get_psychologists()
+        yield rx.toast.success("Psicólogo guardado exitosamente.")
+        yield State.finish_loading()
+
+    @rx.event(background=True)
+    async def delete_psychologist(self, rfc: str):
+        async with self:
+            self.is_loading = True
+        try:
+            async with rx.asession() as session:
+                query = text("DELETE FROM Psicologo WHERE RFC = :RFC")
+                await session.execute(query, {"RFC": rfc})
+                await session.commit()
+        except Exception as e:
+            logging.exception(f"Error deleting psychologist: {e}")
+            async with self:
+                self.is_loading = False
+            yield rx.toast.error(f"Error al eliminar psicólogo: {e}")
+            return
+        yield State.get_psychologists()
+        yield rx.toast.success("Psicólogo eliminado exitosamente.")
+        yield State.finish_loading()
 
     @rx.event
     async def handle_upload(self, files: list[rx.UploadFile]):

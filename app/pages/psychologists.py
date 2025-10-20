@@ -55,6 +55,7 @@ def psychologist_modal() -> rx.Component:
                     ),
                     class_name="mt-4 flex justify-end space-x-2",
                 ),
+                on_submit=State.save_psychologist,
             ),
             open=State.show_psychologist_modal,
         ),
@@ -87,7 +88,13 @@ def psychologist_table() -> rx.Component:
                                 on_click=lambda: State.toggle_psychologist_modal(psych),
                                 class_name="text-blue-500",
                             ),
-                            rx.el.button(rx.icon("trash-2"), class_name="text-red-500"),
+                            rx.el.button(
+                                rx.icon("trash-2"),
+                                on_click=lambda: State.delete_psychologist(
+                                    psych["RFC"]
+                                ),
+                                class_name="text-red-500",
+                            ),
                         ),
                     ),
                 )
