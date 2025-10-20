@@ -83,7 +83,6 @@ class State(rx.State):
             State.get_patients,
             State.get_appointments,
             State.get_tests,
-            State.finish_loading,
         ]
 
     @rx.event
@@ -92,6 +91,8 @@ class State(rx.State):
 
     @rx.event(background=True)
     async def get_statuses(self):
+        async with self:
+            self.is_loading = True
         try:
             async with rx.asession() as session:
                 result = await session.execute(text("SELECT id, estado FROM Status;"))
@@ -102,9 +103,14 @@ class State(rx.State):
             logging.exception(f"Error fetching statuses: {e}")
             async with self:
                 self.statuses = []
+        finally:
+            async with self:
+                self.is_loading = False
 
     @rx.event(background=True)
     async def get_psychologists(self):
+        async with self:
+            self.is_loading = True
         try:
             async with rx.asession() as session:
                 result = await session.execute(
@@ -129,9 +135,14 @@ class State(rx.State):
             logging.exception(f"Error fetching psychologists: {e}")
             async with self:
                 self.psychologists = []
+        finally:
+            async with self:
+                self.is_loading = False
 
     @rx.event(background=True)
     async def get_patients(self):
+        async with self:
+            self.is_loading = True
         try:
             async with rx.asession() as session:
                 result = await session.execute(
@@ -160,9 +171,14 @@ class State(rx.State):
             logging.exception(f"Error fetching patients: {e}")
             async with self:
                 self.patients = []
+        finally:
+            async with self:
+                self.is_loading = False
 
     @rx.event(background=True)
     async def get_appointments(self):
+        async with self:
+            self.is_loading = True
         try:
             async with rx.asession() as session:
                 result = await session.execute(
@@ -188,9 +204,14 @@ class State(rx.State):
             logging.exception(f"Error fetching appointments: {e}")
             async with self:
                 self.appointments = []
+        finally:
+            async with self:
+                self.is_loading = False
 
     @rx.event(background=True)
     async def get_tests(self):
+        async with self:
+            self.is_loading = True
         try:
             async with rx.asession() as session:
                 result = await session.execute(
@@ -216,6 +237,9 @@ class State(rx.State):
             logging.exception(f"Error fetching tests: {e}")
             async with self:
                 self.tests = []
+        finally:
+            async with self:
+                self.is_loading = False
 
     @rx.event
     def toggle_patient_modal(self, patient: Usuario | None = None):
@@ -228,6 +252,8 @@ class State(rx.State):
     def toggle_psychologist_modal(self, psychologist: Psicologo | None = None):
         self.show_psychologist_modal = not self.show_psychologist_modal
         self.editing_psychologist = psychologist
+        if not self.show_psychologist_modal:
+            self.editing_psychologist = None
 
     @rx.event
     def toggle_test_modal(self):
@@ -241,33 +267,33 @@ class State(rx.State):
             curp = form_data.get("CURP")
             if not curp:
                 raise ValueError("CURP is required.")
-            for key, value in form_data.items():
-                if value == "":
-                    form_data[key] = None
+            processed_form_data = {
+                k: v if v != "" else None for k, v in form_data.items()
+            }
             async with rx.asession() as session:
-                if self.editing_patient:
-                    query = text("""UPDATE Usuario SET 
-                           nombre = :nombre, fecha_nacimiento = :fecha_nacimiento, motivo = :motivo, 
-                           profesion = :profesion, domicilio = :domicilio, telefono = :telefono, 
-                           correo = :correo, alergias = :alergias, medicamento = :medicamento
-                           WHERE CURP = :CURP;""")
-                else:
-                    query = text("""INSERT INTO Usuario (CURP, nombre, fecha_nacimiento, motivo, profesion, domicilio, telefono, correo, alergias, medicamento)
-                           VALUES (:CURP, :nombre, :fecha_nacimiento, :motivo, :profesion, :domicilio, :telefono, :correo, :alergias, :medicamento);""")
-                await session.execute(query, form_data)
-                await session.commit()
+                async with session.begin():
+                    if self.editing_patient:
+                        query = text("""UPDATE Usuario SET 
+                               nombre = :nombre, fecha_nacimiento = :fecha_nacimiento, motivo = :motivo, 
+                               profesion = :profesion, domicilio = :domicilio, telefono = :telefono, 
+                               correo = :correo, alergias = :alergias, medicamento = :medicamento
+                               WHERE CURP = :CURP;""")
+                    else:
+                        query = text("""INSERT INTO Usuario (CURP, nombre, fecha_nacimiento, motivo, profesion, domicilio, telefono, correo, alergias, medicamento)
+                               VALUES (:CURP, :nombre, :fecha_nacimiento, :motivo, :profesion, :domicilio, :telefono, :correo, :alergias, :medicamento);""")
+                    await session.execute(query, processed_form_data)
         except Exception as e:
             logging.exception(f"Error saving patient: {e}")
+            yield rx.toast.error(f"Error al guardar paciente: {e}")
+        else:
+            async with self:
+                self.show_patient_modal = False
+                self.editing_patient = None
+            yield State.get_patients()
+            yield rx.toast.success("Paciente guardado exitosamente.")
+        finally:
             async with self:
                 self.is_loading = False
-            yield rx.toast.error(f"Error al guardar paciente: {e}")
-            return
-        async with self:
-            self.show_patient_modal = False
-            self.editing_patient = None
-        yield State.get_patients()
-        yield rx.toast.success("Paciente guardado exitosamente.")
-        yield State.finish_loading()
 
     @rx.event(background=True)
     async def delete_patient(self, curp: str):
@@ -275,18 +301,18 @@ class State(rx.State):
             self.is_loading = True
         try:
             async with rx.asession() as session:
-                query = text("DELETE FROM Usuario WHERE CURP = :CURP")
-                await session.execute(query, {"CURP": curp})
-                await session.commit()
+                async with session.begin():
+                    query = text("DELETE FROM Usuario WHERE CURP = :CURP")
+                    await session.execute(query, {"CURP": curp})
         except Exception as e:
             logging.exception(f"Error deleting patient: {e}")
+            yield rx.toast.error(f"Error al eliminar paciente: {e}")
+        else:
+            yield State.get_patients()
+            yield rx.toast.success("Paciente eliminado exitosamente.")
+        finally:
             async with self:
                 self.is_loading = False
-            yield rx.toast.error(f"Error al eliminar paciente: {e}")
-            return
-        yield State.get_patients()
-        yield rx.toast.success("Paciente eliminado exitosamente.")
-        yield State.finish_loading()
 
     @rx.event(background=True)
     async def save_psychologist(self, form_data: dict):
@@ -296,32 +322,32 @@ class State(rx.State):
             rfc = form_data.get("RFC")
             if not rfc:
                 raise ValueError("RFC is required.")
-            for key, value in form_data.items():
-                if value == "":
-                    form_data[key] = None
+            processed_form_data = {
+                k: v if v != "" else None for k, v in form_data.items()
+            }
             async with rx.asession() as session:
-                if self.editing_psychologist:
-                    query = text("""UPDATE Psicologo SET 
-                           nombre = :nombre, telefono = :telefono, correo = :correo, 
-                           especialidad = :especialidad, cedula_profesional = :cedula_profesional
-                           WHERE RFC = :RFC;""")
-                else:
-                    query = text("""INSERT INTO Psicologo (RFC, nombre, telefono, correo, especialidad, cedula_profesional)
-                           VALUES (:RFC, :nombre, :telefono, :correo, :especialidad, :cedula_profesional);""")
-                await session.execute(query, form_data)
-                await session.commit()
+                async with session.begin():
+                    if self.editing_psychologist:
+                        query = text("""UPDATE Psicologo SET 
+                               nombre = :nombre, telefono = :telefono, correo = :correo, 
+                               especialidad = :especialidad, cedula_profesional = :cedula_profesional
+                               WHERE RFC = :RFC;""")
+                    else:
+                        query = text("""INSERT INTO Psicologo (RFC, nombre, telefono, correo, especialidad, cedula_profesional)
+                               VALUES (:RFC, :nombre, :telefono, :correo, :especialidad, :cedula_profesional);""")
+                    await session.execute(query, processed_form_data)
         except Exception as e:
             logging.exception(f"Error saving psychologist: {e}")
+            yield rx.toast.error(f"Error al guardar psicólogo: {e}")
+        else:
+            async with self:
+                self.show_psychologist_modal = False
+                self.editing_psychologist = None
+            yield State.get_psychologists()
+            yield rx.toast.success("Psicólogo guardado exitosamente.")
+        finally:
             async with self:
                 self.is_loading = False
-            yield rx.toast.error(f"Error al guardar psicólogo: {e}")
-            return
-        async with self:
-            self.show_psychologist_modal = False
-            self.editing_psychologist = None
-        yield State.get_psychologists()
-        yield rx.toast.success("Psicólogo guardado exitosamente.")
-        yield State.finish_loading()
 
     @rx.event(background=True)
     async def delete_psychologist(self, rfc: str):
@@ -329,28 +355,36 @@ class State(rx.State):
             self.is_loading = True
         try:
             async with rx.asession() as session:
-                query = text("DELETE FROM Psicologo WHERE RFC = :RFC")
-                await session.execute(query, {"RFC": rfc})
-                await session.commit()
+                async with session.begin():
+                    query = text("DELETE FROM Psicologo WHERE RFC = :RFC")
+                    await session.execute(query, {"RFC": rfc})
         except Exception as e:
             logging.exception(f"Error deleting psychologist: {e}")
+            yield rx.toast.error(f"Error al eliminar psicólogo: {e}")
+        else:
+            yield State.get_psychologists()
+            yield rx.toast.success("Psicólogo eliminado exitosamente.")
+        finally:
             async with self:
                 self.is_loading = False
-            yield rx.toast.error(f"Error al eliminar psicólogo: {e}")
-            return
-        yield State.get_psychologists()
-        yield rx.toast.success("Psicólogo eliminado exitosamente.")
-        yield State.finish_loading()
 
     @rx.event
     async def handle_upload(self, files: list[rx.UploadFile]):
         self.is_uploading = True
-        for i, file in enumerate(files):
-            upload_data = await file.read()
-            outfile = rx.get_upload_dir() / file.name
-            with outfile.open("wb") as f:
-                f.write(upload_data)
-            self.uploaded_files.append(file.name)
-            self.upload_progress = int((i + 1) / len(files) * 100)
-        self.is_uploading = False
-        return rx.toast.success(f"Uploaded {len(files)} files.")
+        self.upload_progress = 0
+        try:
+            for i, file in enumerate(files):
+                upload_data = await file.read()
+                outfile = rx.get_upload_dir() / file.name
+                with outfile.open("wb") as f:
+                    f.write(upload_data)
+                self.uploaded_files.append(file.name)
+                self.upload_progress = int((i + 1) / len(files) * 100)
+                yield
+            yield rx.toast.success(f"Uploaded {len(files)} files.")
+        except Exception as e:
+            logging.exception(f"Error during upload: {e}")
+            yield rx.toast.error("File upload failed.")
+        finally:
+            self.is_uploading = False
+            self.upload_progress = 0
