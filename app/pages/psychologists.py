@@ -93,7 +93,7 @@ def psychologist_table() -> rx.Component:
                                 on_click=lambda: State.delete_psychologist(
                                     psych["RFC"]
                                 ),
-                                class_name="text-red-500",
+                                class_name="text-red-500 ml-2",
                             ),
                         ),
                     ),

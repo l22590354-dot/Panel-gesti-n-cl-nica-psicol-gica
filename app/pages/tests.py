@@ -72,7 +72,18 @@ def test_modal() -> rx.Component:
                     ),
                     upload_component(),
                     class_name="flex flex-col space-y-2",
-                )
+                ),
+                rx.el.div(
+                    rx.radix.primitives.dialog.close(
+                        rx.el.button(
+                            "Cancelar",
+                            type="button",
+                            on_click=State.toggle_test_modal,
+                            variant="soft",
+                        )
+                    ),
+                    class_name="mt-4 flex justify-end space-x-2",
+                ),
             ),
             open=State.show_test_modal,
         ),
