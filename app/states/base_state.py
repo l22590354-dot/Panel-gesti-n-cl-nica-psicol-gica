@@ -60,6 +60,8 @@ class State(rx.State):
     editing_psychologist: Psicologo | None = None
     show_appointment_modal: bool = False
     editing_appointment: Cita | None = None
+    show_view_appointment_modal: bool = False
+    viewing_appointment: Cita | None = None
     show_test_modal: bool = False
     current_date: str = datetime.date.today().isoformat()
     hours: list[str] = [f"{h:02d}" for h in range(8, 22)]
@@ -117,6 +119,10 @@ class State(rx.State):
     @rx.var
     def get_patient_name(self) -> dict[str, str]:
         return {p["CURP"]: p["nombre"] for p in self.patients}
+
+    @rx.var
+    def get_psychologist_name(self) -> dict[str, str]:
+        return {p["RFC"]: p["nombre"] for p in self.psychologists}
 
     @rx.var
     def get_psychologist_color(self) -> dict[str, str]:
@@ -390,9 +396,16 @@ class State(rx.State):
         self.psychologists = [p for p in self.psychologists if p["RFC"] != rfc]
 
     @rx.event
-    def toggle_appointment_modal(self, appointment: Cita | None):
-        self.show_appointment_modal = not self.show_appointment_modal
+    def view_appointment_details(self, appointment: Cita | None):
+        self.show_view_appointment_modal = appointment is not None
+        self.viewing_appointment = appointment
+
+    @rx.event
+    def toggle_appointment_modal(self, appointment: Cita | None, edit_mode: bool):
+        self.show_appointment_modal = edit_mode
         self.editing_appointment = appointment
+        if edit_mode:
+            self.show_view_appointment_modal = False
 
     @rx.event
     def save_appointment(self, form_data: dict):
