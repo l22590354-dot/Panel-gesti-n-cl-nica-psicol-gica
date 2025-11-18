@@ -45,6 +45,8 @@ class Prueba(TypedDict):
     fecha_aplicacion: str
     resultados: str
     archivo_url: str
+    puntaje: int
+    nivel: str
 
 
 class State(rx.State):
@@ -68,6 +70,7 @@ class State(rx.State):
     show_view_appointment_modal: bool = False
     viewing_appointment: Cita | None = None
     show_test_modal: bool = False
+    editing_test: Prueba | None = None
     current_date: str = datetime.date.today().isoformat()
     hours: list[str] = [f"{h:02d}" for h in range(8, 22)]
 
@@ -299,8 +302,10 @@ class State(rx.State):
                 "psicologo_RFC": "GARM850101ABC",
                 "tipo_prueba": "Inventario de Ansiedad de Beck (BAI)",
                 "fecha_aplicacion": "2025-10-20",
-                "resultados": "Nivel de ansiedad moderado, puntaje de 24.",
+                "resultados": "Nivel de ansiedad moderado.",
                 "archivo_url": "",
+                "puntaje": 24,
+                "nivel": "Moderado",
             },
             {
                 "id": 2,
@@ -308,8 +313,10 @@ class State(rx.State):
                 "psicologo_RFC": "LOPE900202DEF",
                 "tipo_prueba": "Escala de Autoestima de Rosenberg",
                 "fecha_aplicacion": "2025-10-15",
-                "resultados": "Nivel de autoestima bajo, puntaje de 18.",
+                "resultados": "Nivel de autoestima bajo.",
                 "archivo_url": "",
+                "puntaje": 18,
+                "nivel": "Bajo",
             },
             {
                 "id": 3,
@@ -317,8 +324,10 @@ class State(rx.State):
                 "psicologo_RFC": "MART780303GHI",
                 "tipo_prueba": "Inventario de Depresión de Beck (BDI)",
                 "fecha_aplicacion": "2025-10-21",
-                "resultados": "Síntomas de depresión severa, puntaje de 35.",
+                "resultados": "Síntomas de depresión severa.",
                 "archivo_url": "",
+                "puntaje": 35,
+                "nivel": "Severo",
             },
             {
                 "id": 4,
@@ -328,6 +337,8 @@ class State(rx.State):
                 "fecha_aplicacion": "2025-10-10",
                 "resultados": "Puntuaciones altas en la subescala de ira.",
                 "archivo_url": "",
+                "puntaje": 78,
+                "nivel": "Alto",
             },
             {
                 "id": 5,
@@ -335,8 +346,10 @@ class State(rx.State):
                 "psicologo_RFC": "FERN950505MNO",
                 "tipo_prueba": "Test de inteligencia de Wechsler para adultos (WAIS)",
                 "fecha_aplicacion": "2025-10-22",
-                "resultados": "CI de 115, en el rango promedio-alto.",
+                "resultados": "CI en el rango promedio-alto.",
                 "archivo_url": "",
+                "puntaje": 115,
+                "nivel": "Alto",
             },
         ]
         self.is_loading = False
@@ -488,8 +501,13 @@ class State(rx.State):
         self.show_appointment_modal = True
 
     @rx.event
-    def toggle_test_modal(self):
+    def toggle_test_modal(self, test: Prueba | None):
         self.show_test_modal = not self.show_test_modal
+        self.editing_test = test
+
+    @rx.event
+    def delete_test(self, test_id: int):
+        self.tests = [t for t in self.tests if t["id"] != test_id]
 
     @rx.event
     async def handle_upload(self, files: list[rx.UploadFile]):
