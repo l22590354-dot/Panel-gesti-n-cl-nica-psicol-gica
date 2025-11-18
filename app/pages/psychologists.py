@@ -37,6 +37,26 @@ def psychologist_modal() -> rx.Component:
                         ),
                         class_name="border rounded p-2 w-full",
                     ),
+                    rx.el.label("Especialidad"),
+                    rx.el.input(
+                        name="especialidad",
+                        default_value=rx.cond(
+                            State.editing_psychologist,
+                            State.editing_psychologist["especialidad"],
+                            "",
+                        ),
+                        class_name="border rounded p-2 w-full",
+                    ),
+                    rx.el.label("Cédula Profesional"),
+                    rx.el.input(
+                        name="cedula_profesional",
+                        default_value=rx.cond(
+                            State.editing_psychologist,
+                            State.editing_psychologist["cedula_profesional"],
+                            "",
+                        ),
+                        class_name="border rounded p-2 w-full",
+                    ),
                     class_name="flex flex-col space-y-2",
                 ),
                 rx.el.div(
