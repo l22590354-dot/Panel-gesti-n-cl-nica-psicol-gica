@@ -191,8 +191,10 @@ def patient_table() -> rx.Component:
                         rx.el.td(patient["correo"]),
                         rx.el.td(
                             rx.el.button(
-                                rx.icon("copy"),
-                                on_click=lambda: State.toggle_patient_modal(patient),
+                                rx.icon("file_input"),
+                                on_click=lambda: rx.redirect(
+                                    f"/patients/{patient['CURP']}"
+                                ),
                                 class_name="text-blue-500",
                             ),
                             rx.el.button(

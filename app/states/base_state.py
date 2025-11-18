@@ -56,6 +56,7 @@ class State(rx.State):
     tests: list[Prueba] = []
     show_patient_modal: bool = False
     editing_patient: Usuario | None = None
+    selected_patient: Usuario | None = None
     show_psychologist_modal: bool = False
     editing_psychologist: Psicologo | None = None
     show_appointment_modal: bool = False
@@ -394,6 +395,17 @@ class State(rx.State):
     @rx.event
     def delete_psychologist(self, rfc: str):
         self.psychologists = [p for p in self.psychologists if p["RFC"] != rfc]
+
+    @rx.event
+    async def get_patient_by_curp(self):
+        if not self.patients:
+            await self.on_load()
+        curp = self.router.page.params.get("CURP", "")
+        self.selected_patient = next(
+            (p for p in self.patients if p["CURP"] == curp), None
+        )
+        self.is_loading = False
+        return
 
     @rx.event
     def view_appointment_details(self, appointment: Cita | None):
