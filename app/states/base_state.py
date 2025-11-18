@@ -21,6 +21,8 @@ class Usuario(TypedDict):
 class Psicologo(TypedDict):
     RFC: str
     nombre: str
+    telefono: str
+    correo: str
     especialidad: str
     cedula_profesional: str
 
@@ -205,30 +207,40 @@ class State(rx.State):
             {
                 "RFC": "GARM850101ABC",
                 "nombre": "Mónica García Robles",
+                "telefono": "4421112233",
+                "correo": "monica.garcia@clinicapsi.com",
                 "especialidad": "Terapia Cognitivo-Conductual",
                 "cedula_profesional": "87654321",
             },
             {
                 "RFC": "LOPE900202DEF",
                 "nombre": "Juan López Castillo",
+                "telefono": "4422223344",
+                "correo": "juan.lopez@clinicapsi.com",
                 "especialidad": "Psicología Infantil",
                 "cedula_profesional": "87654322",
             },
             {
                 "RFC": "MART780303GHI",
                 "nombre": "Laura Martínez Soto",
+                "telefono": "4423334455",
+                "correo": "laura.martinez@clinicapsi.com",
                 "especialidad": "Terapia de Pareja",
                 "cedula_profesional": "87654323",
             },
             {
                 "RFC": "RODR820404JKL",
                 "nombre": "Carlos Rodríguez Peña",
+                "telefono": "4424445566",
+                "correo": "carlos.rodriguez@clinicapsi.com",
                 "especialidad": "Psicoanálisis",
                 "cedula_profesional": "87654324",
             },
             {
                 "RFC": "FERN950505MNO",
                 "nombre": "Ana Fernández Luna",
+                "telefono": "4425556677",
+                "correo": "ana.fernandez@clinicapsi.com",
                 "especialidad": "Neuropsicología",
                 "cedula_profesional": "87654325",
             },
