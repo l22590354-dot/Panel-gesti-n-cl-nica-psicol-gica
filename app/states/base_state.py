@@ -47,6 +47,8 @@ class Prueba(TypedDict):
 
 class State(rx.State):
     sidebar_open: bool = True
+    is_authenticated: bool = False
+    auth_error: str = ""
     is_loading: bool = False
     is_uploading: bool = False
     upload_progress: int = 0
@@ -327,6 +329,27 @@ class State(rx.State):
         ]
         self.is_loading = False
         return
+
+    @rx.event
+    def login(self, form_data: dict):
+        username = form_data.get("username")
+        password = form_data.get("password")
+        if username == "Admin" and password == "123456789":
+            self.is_authenticated = True
+            self.auth_error = ""
+            return rx.redirect("/")
+        else:
+            self.auth_error = "Usuario o contraseña incorrectos."
+
+    @rx.event
+    def logout(self):
+        self.is_authenticated = False
+        return rx.redirect("/login")
+
+    @rx.event
+    def require_login(self):
+        if not self.is_authenticated:
+            return rx.redirect("/login")
 
     @rx.event
     def toggle_sidebar(self):

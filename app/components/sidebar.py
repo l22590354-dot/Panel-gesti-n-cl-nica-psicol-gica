@@ -39,7 +39,19 @@ def sidebar() -> rx.Component:
             ),
             class_name="flex-grow",
         ),
-        rx.el.div(class_name="p-4 border-t border-gray-200"),
+        rx.el.div(
+            rx.el.a(
+                rx.el.div(
+                    rx.icon("log-out", size=20),
+                    rx.el.span("Cerrar Sesión"),
+                    class_name="flex items-center space-x-3 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg px-3 py-2 transition-all duration-150",
+                ),
+                on_click=State.logout,
+                href="#",
+                class_name="w-full",
+            ),
+            class_name="p-4 border-t border-gray-200",
+        ),
         class_name="flex flex-col h-full bg-white text-gray-800 border-r border-gray-200 transform transition-all duration-300 ease-in-out",
         width=rx.cond(State.sidebar_open, "256px", "0px"),
         opacity=rx.cond(State.sidebar_open, 1, 0),
