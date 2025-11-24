@@ -210,66 +210,98 @@ def appointment_modal() -> rx.Component:
 
 def view_appointment_modal() -> rx.Component:
     return rx.radix.primitives.dialog.root(
-        rx.radix.primitives.dialog.content(
-            rx.radix.primitives.dialog.title("Detalles de la Cita"),
-            rx.cond(
-                State.viewing_appointment,
-                rx.el.div(
-                    rx.el.div(
-                        rx.el.h3("Paciente", class_name="font-semibold"),
-                        rx.el.p(
-                            State.get_patient_name.get(
-                                State.viewing_appointment["paciente_CURP"]
-                            )
-                        ),
-                        class_name="mb-2",
-                    ),
-                    rx.el.div(
-                        rx.el.h3("Psicólogo", class_name="font-semibold"),
-                        rx.el.p(
-                            State.get_psychologist_name.get(
-                                State.viewing_appointment["psicologo_RFC"]
-                            )
-                        ),
-                        class_name="mb-2",
-                    ),
-                    rx.el.div(
-                        rx.el.h3("Fecha y Hora", class_name="font-semibold"),
-                        rx.el.p(
-                            f"{State.viewing_appointment['fecha']} a las {State.viewing_appointment['hora']}"
-                        ),
-                        class_name="mb-2",
-                    ),
-                    rx.el.div(
-                        rx.el.h3("Consultorio", class_name="font-semibold"),
-                        rx.el.p(State.viewing_appointment["consultorio"]),
-                        class_name="mb-2",
-                    ),
-                    rx.el.div(
-                        rx.el.h3("Modalidad", class_name="font-semibold"),
-                        rx.el.p(State.viewing_appointment["modalidad"]),
-                        class_name="mb-2",
-                    ),
-                    rx.el.div(
-                        rx.el.button(
-                            "Editar",
-                            on_click=lambda: State.toggle_appointment_modal(
-                                State.viewing_appointment, edit_mode=True
-                            ),
-                            class_name="bg-blue-500 text-white py-2 px-4 rounded mr-2",
-                        ),
-                        rx.radix.primitives.dialog.close(
-                            rx.el.button(
-                                "Cerrar",
-                                type="button",
-                                on_click=State.view_appointment_details(None),
-                                variant="soft",
-                            )
-                        ),
-                        class_name="mt-4 flex justify-end",
-                    ),
+        rx.radix.primitives.dialog.portal(
+            rx.radix.primitives.dialog.overlay(
+                class_name="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            ),
+            rx.radix.primitives.dialog.content(
+                rx.radix.primitives.dialog.title(
+                    "Detalles de la Cita",
+                    class_name="text-2xl font-bold pb-2 mb-4 border-b-2 border-violet-200 text-gray-800 font-['Lora']",
                 ),
-                rx.fragment(),
+                rx.cond(
+                    State.viewing_appointment,
+                    rx.el.div(
+                        rx.el.div(
+                            rx.el.h3(
+                                "Paciente", class_name="font-semibold text-violet-700"
+                            ),
+                            rx.el.p(
+                                State.get_patient_name.get(
+                                    State.viewing_appointment["paciente_CURP"]
+                                ),
+                                class_name="text-gray-700",
+                            ),
+                            class_name="mb-3",
+                        ),
+                        rx.el.div(
+                            rx.el.h3(
+                                "Psicólogo", class_name="font-semibold text-violet-700"
+                            ),
+                            rx.el.p(
+                                State.get_psychologist_name.get(
+                                    State.viewing_appointment["psicologo_RFC"]
+                                ),
+                                class_name="text-gray-700",
+                            ),
+                            class_name="mb-3",
+                        ),
+                        rx.el.div(
+                            rx.el.h3(
+                                "Fecha y Hora",
+                                class_name="font-semibold text-violet-700",
+                            ),
+                            rx.el.p(
+                                f"{State.viewing_appointment['fecha']} a las {State.viewing_appointment['hora']}",
+                                class_name="text-gray-700",
+                            ),
+                            class_name="mb-3",
+                        ),
+                        rx.el.div(
+                            rx.el.h3(
+                                "Consultorio",
+                                class_name="font-semibold text-violet-700",
+                            ),
+                            rx.el.p(
+                                State.viewing_appointment["consultorio"],
+                                class_name="text-gray-700",
+                            ),
+                            class_name="mb-3",
+                        ),
+                        rx.el.div(
+                            rx.el.h3(
+                                "Modalidad", class_name="font-semibold text-violet-700"
+                            ),
+                            rx.el.p(
+                                State.viewing_appointment["modalidad"],
+                                class_name="text-gray-700",
+                            ),
+                            class_name="mb-3",
+                        ),
+                        rx.el.div(
+                            rx.el.button(
+                                "Editar",
+                                on_click=lambda: State.toggle_appointment_modal(
+                                    State.viewing_appointment, edit_mode=True
+                                ),
+                                class_name="bg-violet-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-violet-700 transition mr-2",
+                            ),
+                            rx.radix.primitives.dialog.close(
+                                rx.el.button(
+                                    "Cerrar",
+                                    type="button",
+                                    on_click=lambda: State.view_appointment_details(
+                                        None
+                                    ),
+                                    class_name="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition",
+                                )
+                            ),
+                            class_name="mt-6 flex justify-end pt-4 border-t",
+                        ),
+                    ),
+                    rx.fragment(),
+                ),
+                class_name="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl p-8 w-full max-w-md z-50",
             ),
         ),
         open=State.show_view_appointment_modal,

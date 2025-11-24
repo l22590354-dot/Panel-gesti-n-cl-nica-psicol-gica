@@ -359,7 +359,8 @@ class State(rx.State):
     def login(self, form_data: dict):
         username = form_data.get("username")
         password = form_data.get("password")
-        if username == "Admin" and password == "123456789":
+        valid_credentials = {"Admin": "123456789", "psicologo": "123Sprint"}
+        if username in valid_credentials and valid_credentials[username] == password:
             self.is_authenticated = True
             self.auth_error = ""
             return rx.redirect("/")
