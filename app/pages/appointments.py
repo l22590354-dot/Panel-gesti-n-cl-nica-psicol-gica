@@ -40,125 +40,170 @@ def appointment_modal() -> rx.Component:
                 class_name="bg-violet-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-violet-700 transition",
             )
         ),
-        rx.radix.primitives.dialog.content(
-            rx.radix.primitives.dialog.title("Añadir/Editar Cita"),
-            rx.el.form(
-                rx.el.div(
-                    rx.el.label("Paciente"),
-                    rx.el.select(
-                        rx.el.option("Seleccionar Paciente", value=""),
-                        rx.foreach(
-                            State.patients,
-                            lambda p: rx.el.option(p["nombre"], value=p["CURP"]),
-                        ),
-                        name="paciente_CURP",
-                        default_value=rx.cond(
-                            State.editing_appointment,
-                            State.editing_appointment["paciente_CURP"],
-                            "",
-                        ),
-                        class_name="border rounded p-2 w-full",
-                    ),
-                    rx.el.label("Psicólogo"),
-                    rx.el.select(
-                        rx.el.option("Seleccionar Psicólogo", value=""),
-                        rx.foreach(
-                            State.psychologists,
-                            lambda p: rx.el.option(p["nombre"], value=p["RFC"]),
-                        ),
-                        name="psicologo_RFC",
-                        default_value=rx.cond(
-                            State.editing_appointment,
-                            State.editing_appointment["psicologo_RFC"],
-                            "",
-                        ),
-                        class_name="border rounded p-2 w-full",
-                    ),
-                    rx.el.div(
-                        rx.el.div(
-                            rx.el.label("Fecha"),
-                            rx.el.input(
-                                name="fecha",
-                                type="date",
-                                default_value=rx.cond(
-                                    State.editing_appointment,
-                                    State.editing_appointment["fecha"],
-                                    "",
-                                ),
-                                class_name="border rounded p-2 w-full",
-                            ),
-                            class_name="w-1/2",
-                        ),
-                        rx.el.div(
-                            rx.el.label("Hora"),
-                            rx.el.input(
-                                name="hora",
-                                type="time",
-                                default_value=rx.cond(
-                                    State.editing_appointment,
-                                    State.editing_appointment["hora"],
-                                    "",
-                                ),
-                                class_name="border rounded p-2 w-full",
-                            ),
-                            class_name="w-1/2",
-                        ),
-                        class_name="flex space-x-4",
-                    ),
-                    rx.el.div(
-                        rx.el.div(
-                            rx.el.label("Consultorio"),
-                            rx.el.input(
-                                name="consultorio",
-                                default_value=rx.cond(
-                                    State.editing_appointment,
-                                    State.editing_appointment["consultorio"],
-                                    "",
-                                ),
-                                class_name="border rounded p-2 w-full",
-                            ),
-                            class_name="w-1/2",
-                        ),
-                        rx.el.div(
-                            rx.el.label("Modalidad"),
-                            rx.el.select(
-                                rx.el.option("Presencial", value="Presencial"),
-                                rx.el.option("En línea", value="En línea"),
-                                name="modalidad",
-                                default_value=rx.cond(
-                                    State.editing_appointment,
-                                    State.editing_appointment["modalidad"],
-                                    "Presencial",
-                                ),
-                                class_name="border rounded p-2 w-full",
-                            ),
-                            class_name="w-1/2",
-                        ),
-                        class_name="flex space-x-4",
-                    ),
-                    class_name="flex flex-col space-y-4",
-                ),
-                rx.el.div(
-                    rx.el.button(
-                        "Guardar",
-                        type="submit",
-                        class_name="bg-violet-600 text-white py-2 px-4 rounded",
-                    ),
-                    rx.radix.primitives.dialog.close(
-                        rx.el.button(
-                            "Cancelar",
-                            type="button",
-                            on_click=lambda: State.toggle_appointment_modal(
-                                None, edit_mode=False
-                            ),
-                            variant="soft",
-                        )
-                    ),
-                    class_name="mt-4 flex justify-end space-x-2",
-                ),
-                on_submit=State.save_appointment,
+        rx.radix.primitives.dialog.portal(
+            rx.radix.primitives.dialog.overlay(
+                class_name="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
             ),
-            open=State.show_appointment_modal,
+            rx.radix.primitives.dialog.content(
+                rx.radix.primitives.dialog.title(
+                    rx.cond(
+                        State.editing_appointment, "Editar Cita", "Agendar Nueva Cita"
+                    ),
+                    class_name="text-2xl font-bold pb-2 mb-4 border-b-2 border-violet-200 text-gray-800 font-['Lora']",
+                ),
+                rx.el.form(
+                    rx.el.div(
+                        rx.el.h3(
+                            "📅 Detalles de la Cita",
+                            class_name="text-lg font-semibold text-violet-700 mb-4",
+                        ),
+                        rx.el.div(
+                            rx.el.label(
+                                "Paciente",
+                                class_name="text-sm font-medium text-gray-600",
+                            ),
+                            rx.el.select(
+                                rx.el.option("Seleccionar Paciente", value=""),
+                                rx.foreach(
+                                    State.patients,
+                                    lambda p: rx.el.option(
+                                        p["nombre"], value=p["CURP"]
+                                    ),
+                                ),
+                                name="paciente_CURP",
+                                default_value=rx.cond(
+                                    State.editing_appointment,
+                                    State.editing_appointment["paciente_CURP"],
+                                    "",
+                                ),
+                                class_name="w-full px-3 py-2 rounded-md border-2 border-gray-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-shadow",
+                            ),
+                            class_name="mb-4",
+                        ),
+                        rx.el.div(
+                            rx.el.label(
+                                "Psicólogo",
+                                class_name="text-sm font-medium text-gray-600",
+                            ),
+                            rx.el.select(
+                                rx.el.option("Seleccionar Psicólogo", value=""),
+                                rx.foreach(
+                                    State.psychologists,
+                                    lambda p: rx.el.option(p["nombre"], value=p["RFC"]),
+                                ),
+                                name="psicologo_RFC",
+                                default_value=rx.cond(
+                                    State.editing_appointment,
+                                    State.editing_appointment["psicologo_RFC"],
+                                    "",
+                                ),
+                                class_name="w-full px-3 py-2 rounded-md border-2 border-gray-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-shadow",
+                            ),
+                            class_name="mb-4",
+                        ),
+                        rx.el.div(
+                            rx.el.div(
+                                rx.el.label(
+                                    "Fecha",
+                                    class_name="text-sm font-medium text-gray-600",
+                                ),
+                                rx.el.input(
+                                    name="fecha",
+                                    type="date",
+                                    default_value=rx.cond(
+                                        State.editing_appointment,
+                                        State.editing_appointment["fecha"],
+                                        "",
+                                    ),
+                                    class_name="w-full px-3 py-2 rounded-md border-2 border-gray-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-shadow",
+                                ),
+                                class_name="w-full",
+                            ),
+                            rx.el.div(
+                                rx.el.label(
+                                    "Hora",
+                                    class_name="text-sm font-medium text-gray-600",
+                                ),
+                                rx.el.input(
+                                    name="hora",
+                                    type="time",
+                                    default_value=rx.cond(
+                                        State.editing_appointment,
+                                        State.editing_appointment["hora"],
+                                        "",
+                                    ),
+                                    class_name="w-full px-3 py-2 rounded-md border-2 border-gray-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-shadow",
+                                ),
+                                class_name="w-full",
+                            ),
+                            class_name="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4",
+                        ),
+                        rx.el.div(
+                            rx.el.div(
+                                rx.el.label(
+                                    "Consultorio",
+                                    class_name="text-sm font-medium text-gray-600",
+                                ),
+                                rx.el.input(
+                                    name="consultorio",
+                                    default_value=rx.cond(
+                                        State.editing_appointment,
+                                        State.editing_appointment["consultorio"],
+                                        "",
+                                    ),
+                                    class_name="w-full px-3 py-2 rounded-md border-2 border-gray-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-shadow",
+                                ),
+                                class_name="w-full",
+                            ),
+                            rx.el.div(
+                                rx.el.label(
+                                    "Modalidad",
+                                    class_name="text-sm font-medium text-gray-600",
+                                ),
+                                rx.el.select(
+                                    rx.el.option("Presencial", value="Presencial"),
+                                    rx.el.option("En línea", value="En línea"),
+                                    name="modalidad",
+                                    default_value=rx.cond(
+                                        State.editing_appointment,
+                                        State.editing_appointment["modalidad"],
+                                        "Presencial",
+                                    ),
+                                    class_name="w-full px-3 py-2 rounded-md border-2 border-gray-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-shadow",
+                                ),
+                                class_name="w-full",
+                            ),
+                            class_name="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4",
+                        ),
+                        class_name="flex flex-col",
+                    ),
+                    rx.el.div(
+                        rx.radix.primitives.dialog.close(
+                            rx.el.button(
+                                "Cancelar",
+                                type="button",
+                                on_click=lambda: State.toggle_appointment_modal(
+                                    None, edit_mode=False
+                                ),
+                                class_name="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition",
+                            )
+                        ),
+                        rx.el.button(
+                            rx.icon("save", class_name="mr-2"),
+                            "Guardar Cita",
+                            type="submit",
+                            class_name="px-6 py-2 rounded-lg bg-violet-600 text-white font-semibold hover:bg-violet-700 transition flex items-center",
+                        ),
+                        class_name="mt-6 flex justify-end space-x-4 border-t pt-4",
+                    ),
+                    on_submit=State.save_appointment,
+                ),
+                class_name="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl p-8 w-full max-w-2xl z-50",
+            ),
+        ),
+        open=State.show_appointment_modal,
+        on_open_change=lambda open: State.toggle_appointment_modal(
+            None, edit_mode=False
         ),
     )
 
